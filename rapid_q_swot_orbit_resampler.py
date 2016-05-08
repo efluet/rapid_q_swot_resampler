@@ -6,7 +6,7 @@
 # 	2) the map of the largest rivers that are computed (“largest_rivers.shp”), and 
 # 	3) the SWOT orbit map (“SWOT_orbit.shp”), 
 #
-# The input data are currently main module at the bottom for testing, 
+# The input data are currently hard-coded in main module at the bottom for ease of testing, 
 # but will be modified to parse command line arguments, once we get the script doing what it should.
 #--------------------------------------------------------------------------------------------------
 
@@ -64,7 +64,6 @@ def shapefile_intersection (in_swot, in_riv, out_intersect):
 	# create empty dataframe for the output
 	output_df = pd.DataFrame(columns=['COMID','TIME', 'ORBITID','QOUT'])
 
-
 	with fiona.open(in_swot, 'r') as layer1:
 
 	    with fiona.open(in_riv, 'r') as layer2:
@@ -92,25 +91,16 @@ def shapefile_intersection (in_swot, in_riv, out_intersect):
 	                        geom1 = shape(feat1['geometry'])
 	                        if geom1.intersects(geom2):
 	                            
-	                            # We take attributes from shp2
-	                            feat2_attribs = feat2['properties']
-	                            
+	                            # We take attributes from shp2, as a data frame
+	                            out_df = pd.DataFrame(feat2['properties'])
 	                            # Then append the uid attribute we want from the other shp
 	                            #props['fid'] = feat1['properties']['fid']
 	                            
-	                            out_df = out_df.append(out_row, ignore_index=True)  # add result row from current year in look to
-
-	                            # Add the content to the right schema in the new shp
-	                            layer3.write({
-	                                'properties': props,
-	                                'geometry': mapping(geom1.intersection(geom2))
-	                            })
+	                            # append the loop intersect output to the cumulative 'intersect_df'
+	                            intersect_df = output_df.append(out_row, ignore_index=True) 
 
     # return a pandas dataframe of the intersecting data
     return intersect_df
-
-
-
 
 
 # test the function above with subset test data 
@@ -127,19 +117,17 @@ if __name__ == '__main__':
 	swot_orbit = r'..\data\swot_swaths\SWOT_890km_77_onepolypertrack_nadirgap_180.shp'
 	resampled_output = r'..\output\test.csv'
 
-
 	# the below code parses command line arguments as inputs, we can use it once we get the script doing what it should.
 	"""
 	# declare input and output files from the command line arguments
-	# this would be
+	# this would be have the following format:
 	#   ./rapid_q_swot_orbit_resampler.py modeled_outputs.nc largest_rivers.shp SWOT_orbit.shp sampled_outputs.nc
 	
 	rapid_q_output = sys.argv[0]
 	rivers = sys.argv[1]
 	swot_orbit = sys.argv[2]
 	resampled_output = sys.argv[3]
-
 	"""
 
-	# execute the function ones the 
+	# execute the resampler function using the input files. 
 	rapid_q_swot_orbit_resampler(rapid_q_output, rivers, swot_orbit, resampled_output)
